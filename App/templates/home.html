@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 
-{% block title %}{% endblock %}
+{% block title %}Home{% endblock %}
 
-{% block page %}{% endblock %}
+{% block page %}Home{% endblock %}
 
 {% block link%}
 <ul id="nav-mobile" class="right">
@@ -16,16 +16,35 @@
         padding: 2px;
     }
 
-    .collection .collection-item.active{
+    .collection. collection-item.active {
         background-color: #E53935;
     }
+
+    .collection. collection-item.black-text {
+        color: black;
+    }
+
+    /* Override link styles */
+    .collection .collection-item a {
+        color: inherit;
+        text-decoration: none;
+    }
+    
 {% endblock %}
 
 
 {% block content %}
 <div class="row">
     <div class="col m3 list-container collection" style="max-height: 88vh;">
-  
+        <ul class="collection" id="pokemon-collection">
+            {% for pokemon in pokemons %}
+            <li id="{{ pokemon.id }}" class="collection-item black-text">
+                <a href="#{{ pokemon.id }}">
+                    {{ pokemon.name }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
     </div>
     
     <div class="col m3">
@@ -50,13 +69,12 @@
                 </tr>
             </thead>
             <tbody>
-              <!-- show captured pokemon here with controls to rename and release for each pokemon -->
+                
             </tbody>
         </table>
     </div>
 
 </div>
-
 
 
 {% endblock %}

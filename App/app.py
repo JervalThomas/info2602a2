@@ -1,6 +1,6 @@
 import os, csv
 import datetime
-from flask import Flask, request, redirect, render_template, url_for, flash
+from flask import Flask, request, redirect, render_template, url_for, flash,make_response,jsonify
 from flask_cors import CORS
 from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import (
@@ -121,21 +121,47 @@ def logout_action():
 @app.route("/app/<int:pokemon_id>", methods=['GET'])
 @jwt_required()
 def home_page(pokemon_id=1):
-    # update pass relevant data to template
-    return render_template("home.html")
+    pokemons = Pokemon.query.all()
+    pokemon = Pokemon.query.get(pokemon_id)
+    return render_template("home.html", pokemons=pokemons, pokemon=pokemon)
 
 # Action Routes (To Update)
+def login_user(username, password):
+    user = User.query.filter_by(username=username).first()
+    if user and user.check_password(password):
+        token = create_access_token(identity=user)
+        response = make_response({'access_token': token})
+        set_access_cookies(response, token)
+        return response
+    else:
+        response = make_response({'error': 'bad username/password given'})
+        response.status_code = 401
+        return response
 
 @app.route("/login", methods=['POST'])
 def login_action():
-  # implement login
-  return "Login Action"
+    data = request.form
+    token_response = login_user(data['username'], data['password'])
+    if 'access_token' in token_response.json:
+        flash('Logged in successfully.')
+        response = redirect(url_for('home_page'))
+        response.set_cookie('access_token', token_response.json['access_token'])
+    else:
+        flash('Invalid username or password')
+        response = redirect(url_for('login_page'))
+    return response
 
 @app.route("/pokemon/<int:pokemon_id>", methods=['POST'])
 @jwt_required()
 def capture_action(pokemon_id):
-  # implement save newly captured pokemon, show a message then reload page
-  return redirect(request.referrer)
+    username = current_user()
+    user = User.query.filter_by(username=username).first()
+    captured = user.catch_pokemon(pokemon_id)
+    if captured:
+        return jsonify(message=f'{captured.name} captured with id: {captured.id}'), 201
+    else:
+        return jsonify(error=f'{pokemon_id} is not a valid pokemon id'), 400
+    return redirect(request.referrer)
 
 @app.route("/rename-pokemon/<int:pokemon_id>", methods=['POST'])
 @jwt_required()
