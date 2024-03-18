@@ -82,6 +82,8 @@ class User(db.Model):
   def __repr__(self):
       return f'<User {self.id}: {self.username}>'
 
+  def get_id(self):
+    return self.id
 
   def get_json(self):
     return {

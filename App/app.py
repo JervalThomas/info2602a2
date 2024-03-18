@@ -123,7 +123,7 @@ def logout_action():
 def home_page(pokemon_id=1):
     pokemons = Pokemon.query.all()
     pokemon = Pokemon.query.get(pokemon_id)
-    return render_template("home.html", pokemons=pokemons, pokemon=pokemon)
+    return render_template("home.html", pokemons=pokemons, pokemon=pokemon, pokemon_id=pokemon_id)
 
 # Action Routes (To Update)
 def login_user(username, password):
@@ -154,14 +154,27 @@ def login_action():
 @app.route("/pokemon/<int:pokemon_id>", methods=['POST'])
 @jwt_required()
 def capture_action(pokemon_id):
-    username = current_user()
-    user = User.query.filter_by(username=username).first()
-    captured = user.catch_pokemon(pokemon_id)
-    if captured:
-        return jsonify(message=f'{captured.name} captured with id: {captured.id}'), 201
+    user = current_user
+    if not isinstance(user, User):
+        return "Unauthorized", 401
+    
+    captured = None  # Initialize captured variable outside of the conditional block
+    if request.method == 'POST':
+        pokemon_name = request.form.get('pokemon_name')
+        if not pokemon_name:
+            flash("Pokemon name is required")
+        else:
+            captured = user.catch_pokemon(pokemon_id, pokemon_name)
+            
+    pokemon = Pokemon.query.get(pokemon_id)
+    pokemons = Pokemon.query.all()
+    captures = UserPokemon.query.all()  # Assuming User has a relationship with captured pokemons
+    
+    if pokemon:
+        return render_template("home.html", pokemons=pokemons, pokemon=pokemon, pokemon_id=pokemon_id, captured=captured, captures=captures)
     else:
-        return jsonify(error=f'{pokemon_id} is not a valid pokemon id'), 400
-    return redirect(request.referrer)
+
+        return redirect(url_for('home_page'))
 
 @app.route("/rename-pokemon/<int:pokemon_id>", methods=['POST'])
 @jwt_required()
