@@ -1,6 +1,6 @@
 import os, csv
 import datetime
-from flask import Flask, request, redirect, render_template, url_for, flash
+from flask import Flask, request, redirect, render_template, url_for, flash,make_response,jsonify
 from flask_cors import CORS
 from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import (
@@ -121,21 +121,60 @@ def logout_action():
 @app.route("/app/<int:pokemon_id>", methods=['GET'])
 @jwt_required()
 def home_page(pokemon_id=1):
-    # update pass relevant data to template
-    return render_template("home.html")
+    pokemons = Pokemon.query.all()
+    pokemon = Pokemon.query.get(pokemon_id)
+    captures = UserPokemon.query.all()
+    return render_template("home.html", pokemons=pokemons, pokemon=pokemon, pokemon_id=pokemon_id, captures=captures)
 
 # Action Routes (To Update)
+def login_user(username, password):
+    user = User.query.filter_by(username=username).first()
+    if user and user.check_password(password):
+        token = create_access_token(identity=user)
+        response = make_response({'access_token': token})
+        set_access_cookies(response, token)
+        return response
+    else:
+        response = make_response({'error': 'bad username/password given'})
+        response.status_code = 401
+        return response
 
 @app.route("/login", methods=['POST'])
 def login_action():
-  # implement login
-  return "Login Action"
+    data = request.form
+    token_response = login_user(data['username'], data['password'])
+    if 'access_token' in token_response.json:
+        flash('Logged in successfully.')
+        response = redirect(url_for('home_page'))
+        response.set_cookie('access_token', token_response.json['access_token'])
+    else:
+        flash('Invalid username or password')
+        response = redirect(url_for('login_page'))
+    return response
 
 @app.route("/pokemon/<int:pokemon_id>", methods=['POST'])
 @jwt_required()
 def capture_action(pokemon_id):
-  # implement save newly captured pokemon, show a message then reload page
-  return redirect(request.referrer)
+    user = current_user
+    if not isinstance(user, User):
+        return "Unauthorized", 401
+    
+    captured = None  # Initialize captured variable outside of the conditional block
+    if request.method == 'POST':
+        pokemon_name = request.form.get('pokemon_name')
+        if not pokemon_name:
+            flash("Pokemon name is required")
+        else:
+            captured = user.catch_pokemon(pokemon_id, pokemon_name)
+            
+    pokemon = Pokemon.query.get(pokemon_id)
+    pokemons = Pokemon.query.all()
+    captures = UserPokemon.query.all()  # Assuming User has a relationship with captured pokemons
+    
+    if pokemon:
+        return render_template("home.html", pokemons=pokemons, pokemon=pokemon, pokemon_id=pokemon_id, captured=captured, captures=captures)
+    else:
+        return redirect(url_for('home_page'))
 
 @app.route("/rename-pokemon/<int:pokemon_id>", methods=['POST'])
 @jwt_required()
