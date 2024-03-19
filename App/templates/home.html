@@ -12,11 +12,11 @@
 
 {% block styles %}
 td {
-padding: 2px;
+    padding: 2px;
 }
 
 .collection .collection-item.active {
-background-color: #E53935;
+    background-color: #E53935;
 }
 
 {% endblock %}
@@ -26,26 +26,36 @@ background-color: #E53935;
     <div class="col m3 list-container collection" style="max-height: 88vh;">
         {% for pokemon in pokemons %}
         <a id="poke-{{ pokemon.id }}" href="/app/{{ pokemon.id }}#poke-{{ pokemon.id }}"
-            class="collection-item black-text{% if pokemon.id == pokemon_id %} active white-text{% endif %}">
-            <span class="card-title">{{ pokemon.name }}</span>
-        </a>
+            class="collection-item black-text{% if pokemon.id == pokemon_id %} active white-text{% endif %}">{{ pokemon.name }}</a>
         {% endfor %}
     </div>
 
     <div class="col m3">
         <p class="text-center">Selected Pokemon</p>
         <div id="pokemon-detail">
+            <img id="pokemon-image"
+                src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ pokemon.id }}.png"
+                alt="" style="height: 100; width: 100;">
+            <div class="card-content">
+                <span class="card-title">{{ pokemon.name }}</span>
+                <p id="pokemon-description">
+                    Type1: {{ pokemon.type1 }}
+                </p>
+                <p id="pokemon-description">
+                    Type2: {{ pokemon.type2 }}
+                </p>
+                <p id="pokemon-description">
+                    Weight: {{ pokemon.weight }}
+                </p>
+                <p id="pokemon-description">
+                    Height: {{ pokemon.height }}
+                </p>
+            </div>
             <form action="/pokemon/{{ pokemon.id }}" method="post">
-                <img id="pokemon-image"
-                    src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ pokemon.id }}.png"
-                    alt="">
-                <div class="card-content">
-                    <span class="card-title" >{{ pokemon.name }}</span>
-                    <p id="pokemon-description">Type1: {{ pokemon.type1 }}<br>Type2: {{ pokemon.type2 }}<br>Weight: {{
-                        pokemon.weight }}<br>Height: {{ pokemon.height }}</p>
-                </div>
                 <input required type="text" id="pokemon_name" name="pokemon_name" placeholder="Name">
-                <input type="submit" value="CAPTURED" id="captureBtn" class=" collection-item active">
+                <button type="submit" id="captureBtn" class=" red text-white btn">
+                    CAPTURE
+                </button>
             </form>
         </div>
     </div>
@@ -63,18 +73,24 @@ background-color: #E53935;
             </thead>
             <tbody>
                 {% for capture in captures %}
-                <tr>
+                <tr id="{{capture.name}}-row">
                     <td>
-                        <p>
-                            <span>
-                                {{ capture.pokemon.name }}
-                            </span>
-                        </p>
+                        {{ capture.pokemon.name }}
                     </td>
                     <td>{{ capture.name }}</td>
-                    <td><input name="name" id="password" class="validate"></td>
-                    <td><input type="submit" class="blue text-white btn" value="RENAME"></td>
-                    <td><input type="submit" class="blue text-white btn" value="RELEASE"></td>
+                    <form action="/rename_pokemon/{{ pokemon.id }}" method="post">
+                        <td><input name="name" id="rename"></td>
+                        <td>
+                            <button type="submit" id="captureBtn" class="blue text-white btn">
+                                RENAME
+                            </button>
+                        </td>
+                        <td>
+                            <button type="submit" id="captureBtn" class="blue text-white btn">
+                                RELEASE
+                            </button>
+                        </td>
+                    </form>
                 </tr>
                 {% endfor %}
             </tbody>

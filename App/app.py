@@ -123,7 +123,8 @@ def logout_action():
 def home_page(pokemon_id=1):
     pokemons = Pokemon.query.all()
     pokemon = Pokemon.query.get(pokemon_id)
-    return render_template("home.html", pokemons=pokemons, pokemon=pokemon, pokemon_id=pokemon_id)
+    captures = UserPokemon.query.all()
+    return render_template("home.html", pokemons=pokemons, pokemon=pokemon, pokemon_id=pokemon_id, captures=captures)
 
 # Action Routes (To Update)
 def login_user(username, password):
@@ -173,7 +174,6 @@ def capture_action(pokemon_id):
     if pokemon:
         return render_template("home.html", pokemons=pokemons, pokemon=pokemon, pokemon_id=pokemon_id, captured=captured, captures=captures)
     else:
-
         return redirect(url_for('home_page'))
 
 @app.route("/rename-pokemon/<int:pokemon_id>", methods=['POST'])
